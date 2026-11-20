@@ -8,6 +8,6 @@
     "paseo": ">=0.16.2"
   },
   "build": [
-    ["npm", "ci", "--omit=dev"]
+    ["npm", "ci", "--omit=dev", "--ignore-scripts"]
   ]
 }
