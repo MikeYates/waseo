@@ -1,0 +1,9 @@
+{
+  "id": "waseo",
+  "name": "Waseo",
+  "description": "Pair WhatsApp numbers and use confirmed messaging in Paseo agent sessions",
+  "media": [],
+  "requirements": {
+    "paseo": ">=0.16.2"
+  }
+}
