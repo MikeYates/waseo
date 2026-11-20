@@ -7,7 +7,7 @@ import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { createInterface } from "node:readline";
 import { promisify } from "node:util";
 import QRCode from "qrcode";
-import { defineAgentTool, type AgentToolContext, type PluginServerContext } from "@getpaseo/plugin/server";
+import { defineAgentTool, type AgentToolContext, type PluginHandlerContext, type PluginServerContext } from "@getpaseo/plugin/server";
 import { z } from "zod";
 import { wacliPreferences } from "../shared/wacli-settings";
 import {
@@ -1299,6 +1299,26 @@ const waseoAgentTools = [
   sendConfirmedMessageTool,
 ];
 const waseoAgentToolNames = new Set(waseoAgentTools.map((tool) => tool.name));
+const botsLabel = "paseo-bots.bot";
+const botWorkspaceAccessKey = "waseo.toolsEnabled";
+
+async function hasWaseoAccess(
+  identity: {
+    labels?: Readonly<Record<string, string>> | null;
+    workspaceId?: string | null;
+    metadata?: Readonly<Record<string, unknown>> | null;
+  },
+  paseo: PluginHandlerContext["paseo"],
+): Promise<boolean> {
+  if (!identity.labels?.[botsLabel]) return identity.metadata?.waseoToolsEnabled === true;
+  if (!identity.workspaceId) return false;
+  try {
+    const workspace = await paseo.workspaces.ref(identity.workspaceId).refresh();
+    return workspace?.metadata?.[botWorkspaceAccessKey] === true;
+  } catch {
+    return false;
+  }
+}
 
 export function contributeWaseo(server: PluginServerContext) {
   const settings = server.registerSettings(wacliPreferences);
@@ -1311,7 +1331,7 @@ export function contributeWaseo(server: PluginServerContext) {
   server.handle(wacliStatus, getWacliStatus);
   server.handle(wacliManage, manageWacli);
   server.addHook("agent.permission.before", async ({ agent, request }, { paseo }) => {
-    if (agent.metadata?.waseoToolsEnabled !== true) return;
+    if (!(await hasWaseoAccess(agent, paseo))) return;
     if (request.kind !== "tool" || request.metadata?.serverName !== "paseo") return;
     const toolName = /\brun tool "([a-z][a-z0-9_]*)"\?/i.exec(request.description ?? "")?.[1];
     if (!toolName || !waseoAgentToolNames.has(toolName)) return;
@@ -1322,8 +1342,8 @@ export function contributeWaseo(server: PluginServerContext) {
       response: { behavior: "allow" },
     });
   });
-  server.addHook("agent.open.before", async ({ request }) => {
-    if (request.purpose !== "interactive" || request.background || request.metadata.waseoToolsEnabled !== true) return;
+  server.addHook("agent.open.before", async ({ request }, { paseo }) => {
+    if (request.purpose !== "interactive" || request.background || !(await hasWaseoAccess(request, paseo))) return;
     return { ...request, tools: [...request.tools, ...waseoAgentTools] };
   });
   server.handle(whatsappEvent, (_input, { push, signal }) => {

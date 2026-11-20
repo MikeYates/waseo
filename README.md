@@ -6,6 +6,10 @@
 
 <p align="center">WhatsApp for Paseo agents, powered by WACLI.</p>
 
+<p align="center">
+  <img src="assets/waseo-interface.png" width="960" alt="Waseo WhatsApp account list in Paseo">
+</p>
+
 Waseo connects WhatsApp accounts to Paseo. Pair with a QR code, manage multiple numbers, read synced conversations, and let the agents you choose help with messages.
 
 ## What is Waseo?
@@ -23,7 +27,7 @@ Waseo is a Paseo plugin for managing WhatsApp linked devices through [WACLI](htt
 
 ## Use Waseo with agent sessions and Bots
 
-Waseo works with interactive Paseo sessions and the [Bots plugin](https://paseo.sh/plugins/oliexe/bots). Enable Waseo for each agent that should access WhatsApp by using the **Waseo off** composer pill and choosing **Enable Waseo tools and reload**. The agent must be idle with no pending permissions while access changes. Waseo access is off by default, so unrelated agents do not receive its tools.
+Waseo works with interactive Paseo sessions and the [Bots plugin](https://paseo.sh/plugins/oliexe/bots). Access is off by default. In a regular workspace, select agents from the Waseo logo button in the workspace header. In a Bots chat, use its **Active** or **Inactive** composer control. Bot access applies to that Bot's chats. The agent must be idle with no pending permissions while access changes. Waseo reloads the agent to add or remove its tools.
 
 Once enabled, an agent can list paired accounts, find contacts, read one or many chats, and prepare a message. Reading is available without confirmation. Sending requires two separate confirmations: first the WhatsApp account and exact contact, then the exact message text.
 
@@ -32,7 +36,7 @@ Once enabled, an agent can list paired accounts, find contacts, read one or many
 1. Install Waseo in Paseo and open **Waseo** from the sidebar.
 2. If WACLI is not installed, choose **Install WACLI**. Waseo detects an existing WACLI installation automatically.
 3. Choose **Pair new** and scan the QR code from WhatsApp under **Linked Devices**.
-4. Open a Paseo session or Bots chat and enable Waseo for that agent when you want it to use WhatsApp.
+4. Enable Waseo for a session or Bot when you want it to use WhatsApp. Waseo access controls are off by default.
 
 That is it. Waseo manages sync for the paired number and agents can use its tools when enabled. If an account needs to be linked again, pair it from the Waseo page.
 

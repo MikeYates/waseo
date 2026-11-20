@@ -3,7 +3,11 @@
   "name": "Waseo",
   "description": "Connect WhatsApp accounts to Paseo agents with WACLI.",
   "icon": "assets/waseo-logo.png",
+  "media": ["assets/waseo-interface.png"],
   "requirements": {
     "paseo": ">=0.16.2"
-  }
+  },
+  "build": [
+    ["npm", "ci", "--omit=dev"]
+  ]
 }
