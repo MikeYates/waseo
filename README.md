@@ -7,8 +7,10 @@
 <p align="center">WhatsApp for Paseo agents, powered by WACLI.</p>
 
 <p align="center">
-  <img src="assets/waseo-interface.png" width="960" alt="Waseo WhatsApp account list in Paseo">
+  <img src="assets/waseo-interface-sample.png" width="960" alt="Waseo WhatsApp account list with fictional sample data">
 </p>
+
+<p align="center"><sub>Example screen using fictional account details.</sub></p>
 
 Waseo connects WhatsApp accounts to Paseo. Pair with a QR code, manage multiple numbers, read synced conversations, and let the agents you choose help with messages.
 
