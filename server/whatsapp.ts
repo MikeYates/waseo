@@ -1310,13 +1310,30 @@ export function contributeWaseo(server: PluginServerContext) {
   server.handle(whatsappReadRecent, readRecent);
   server.handle(wacliStatus, getWacliStatus);
   server.handle(wacliManage, manageWacli);
+  server.addHook("agent.create.before", async ({ request }) => {
+    const preapproved = new Map(
+      (request.config.toolPolicy?.preapproved ?? []).map((tool) => [`${tool.server}\0${tool.tool}`, tool]),
+    );
+    for (const toolName of waseoAgentToolNames) {
+      const tool = { kind: "mcp" as const, server: "paseo", tool: toolName };
+      preapproved.set(`${tool.server}\0${tool.tool}`, tool);
+    }
+
+    return {
+      ...request,
+      config: {
+        ...request.config,
+        toolPolicy: { preapproved: [...preapproved.values()] },
+      },
+    };
+  });
   server.addHook("agent.permission.before", async ({ agent, request }, { paseo }) => {
     if (request.kind !== "tool" || request.metadata?.serverName !== "paseo") return;
     const toolName = /\brun tool "([a-z][a-z0-9_]*)"\?/i.exec(request.description ?? "")?.[1];
     if (!toolName || !waseoAgentToolNames.has(toolName)) return;
 
-    // Waseo's send tools enforce their own later-turn contact and message codes.
-    // Suppress only Paseo's duplicate MCP invocation prompt for this plugin's tools.
+    // Legacy agents created before Waseo's exact toolPolicy preapprovals use this fallback.
+    // Waseo's send tools still enforce their own later-turn contact and message codes.
     await paseo.agents.ref(agent.id).respondToPermission({
       requestId: request.id,
       response: { behavior: "allow" },
