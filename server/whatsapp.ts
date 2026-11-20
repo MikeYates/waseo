@@ -1311,6 +1311,7 @@ export function contributeWaseo(server: PluginServerContext) {
   server.handle(wacliStatus, getWacliStatus);
   server.handle(wacliManage, manageWacli);
   server.addHook("agent.permission.before", async ({ agent, request }, { paseo }) => {
+    if (agent.metadata?.waseoToolsEnabled !== true) return;
     if (request.kind !== "tool" || request.metadata?.serverName !== "paseo") return;
     const toolName = /\brun tool "([a-z][a-z0-9_]*)"\?/i.exec(request.description ?? "")?.[1];
     if (!toolName || !waseoAgentToolNames.has(toolName)) return;
@@ -1322,7 +1323,7 @@ export function contributeWaseo(server: PluginServerContext) {
     });
   });
   server.addHook("agent.open.before", async ({ request }) => {
-    if (request.purpose !== "interactive" || request.background) return;
+    if (request.purpose !== "interactive" || request.background || request.metadata.waseoToolsEnabled !== true) return;
     return { ...request, tools: [...request.tools, ...waseoAgentTools] };
   });
   server.handle(whatsappEvent, (_input, { push, signal }) => {

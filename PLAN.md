@@ -4,13 +4,14 @@ This plan is based on the current plugin source and its documented behavior. It 
 
 ## 1. Make agent tool routing dependable
 
+- Keep Waseo access off by default for every agent. Expose a per-agent composer pill so users can opt a specific agent into Waseo; only that agent receives Waseo tools and Waseo permission handling. Changing access reloads an idle agent and is blocked while it is running or has pending permissions.
 - Add regression coverage for Bots and regular Paseo sessions: listing paired numbers, reading one or many chats by date, and sending only after the recipient and exact message are separately confirmed.
 - Verify a broad read request calls the read tool directly, does not ask for chat selection, and does not enter the send-recipient flow.
-- Keep MCP auto-approval scoped to `paseo` permission requests whose tool name matches Waseo's allowlist. Waseo's attached tools are not a declared MCP server, so do not inject global `toolPolicy` references; revisit structured tool identity when Paseo exposes it for plugin tools.
+- Keep permission auto-approval scoped to opted-in agents, `paseo` permission requests, and Waseo's tool allowlist. Waseo's attached tools are not a declared MCP server, so do not inject global `toolPolicy` references; revisit structured tool identity when Paseo exposes it for plugin tools.
 - Exercise the permission hook with other Paseo tools and with non-Waseo permission requests to confirm they remain user-controlled.
 - Document that send approvals expire and are held in memory, so restarting Waseo invalidates any pending approval.
 
-**Done when:** read requests complete without approval cards; send requests still require the exact recipient and message codes; unrelated tool approvals are unchanged.
+**Done when:** unrelated agents have no Waseo tools or Waseo preapprovals by default; explicitly opted-in agents can read without approval cards; sending still requires the exact recipient and message codes; unrelated tool approvals are unchanged.
 
 ## 2. Improve message history and contact handling
 
