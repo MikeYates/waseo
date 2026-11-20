@@ -1,9 +1,17 @@
+![Waseo logo](https://raw.githubusercontent.com/MikeYates/waseo/main/assets/waseo-logo.png)
+
 # Waseo
 
-Waseo connects WhatsApp numbers through WACLI. It detects already-paired WACLI accounts, pairs new numbers by QR code, manages sync for multiple numbers, and forwards message, receipt, and chat-presence events to a webhook URL you choose. Interactive Paseo agent sessions, including Bots chats, can list paired accounts, find contacts, read recent messages, and send text messages. Waseo shows recent messages from each account's local WACLI archive and provides WACLI installation, process, startup, uninstall, and data-wipe controls in plugin settings.
+WhatsApp for Paseo agents, powered by WACLI.
 
-Reading messages does not need confirmation and works from WACLI's local archive even when sync is disconnected. Waseo returns the archive's last sync time when available, since stored messages may be stale while disconnected. Waseo automatically accepts Paseo's tool-run permission prompts for Waseo tools only. Before sending, the agent asks you to confirm the selected account and contact's exact phone number, then shows the complete message text for a separate confirmation. Each send approval uses a short-lived code that must appear in a later message in the same agent chat. Sends require an active sync connection and use WACLI's no-preview mode.
+Waseo connects WhatsApp linked devices to Paseo. It helps you pair multiple numbers, manage sync, read local message history, search synced contacts, and forward live events to a webhook you choose.
 
-WACLI must be available on the Paseo daemon machine. On Linux x64 and ARM64, Waseo can install the latest release and verify its published checksum. WACLI is a command-line tool rather than a separate daemon; Waseo's Run, Stop, and Restart controls manage long-running sync processes for paired numbers. Startup sync is optional. Uninstalling the standalone binary leaves WACLI data in place; wiping data removes sessions, account configuration, local archives, and media, so numbers must be paired again. Adding extra numbers requires a WACLI version with named account support. The webhook URL must use HTTPS, except that HTTP is allowed for localhost. A signing secret is optional; when set, WACLI signs webhook requests so your endpoint can verify them. The plugin keeps the secret in memory, passes it to WACLI while sync runs, and you must enter it again after a plugin or daemon restart.
+Waseo uses [WACLI](https://github.com/openclaw/wacli), a lightweight Go command-line client with a local SQLite message archive. WACLI keeps account credentials and synced history on the Paseo daemon machine. Local history can be searched while the live connection is unavailable, though WhatsApp history coverage is best-effort.
 
-WACLI stores linked-device credentials and a local message archive on the daemon. The webhook receives live event data at the URL you configure. Webhook delivery is best-effort; use the local archive to catch up if an endpoint is unavailable. WACLI uses the WhatsApp Web protocol and is not affiliated with WhatsApp or Meta. Pairing and automation may be subject to WhatsApp's terms and can stop working after protocol changes.
+Interactive Paseo sessions and the [Bots plugin](https://paseo.sh/plugins/oliexe/bots) can use Waseo. Access is off by default. Enable it for an agent from its **Waseo off** composer pill. Once enabled, that agent can read messages without confirmation. Sending requires separate confirmation of the exact recipient and the complete message.
+
+To connect an account, open Waseo, install WACLI if it is not already available, then choose **Pair new** and scan the QR code from WhatsApp under **Linked Devices**. Waseo's built-in installer supports Linux x64 and ARM64. Multiple numbers require WACLI named account support.
+
+Webhook events go to the URL you configure. Use HTTPS except for localhost. Delivery is best-effort. A signing secret is optional and can be used by your endpoint to verify requests. Messages shared with an agent are sent to its configured model provider. WACLI uses the WhatsApp Web protocol and is not an official WhatsApp or Meta API.
+
+Requires Paseo 0.16.2 or later and WACLI on the daemon machine.

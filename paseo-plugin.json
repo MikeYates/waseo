@@ -1,8 +1,8 @@
 {
   "id": "waseo",
   "name": "Waseo",
-  "description": "Pair WhatsApp numbers and use confirmed messaging in Paseo agent sessions",
-  "media": [],
+  "description": "Connect WhatsApp accounts to Paseo agents with WACLI.",
+  "icon": "assets/waseo-logo.png",
   "requirements": {
     "paseo": ">=0.16.2"
   }
