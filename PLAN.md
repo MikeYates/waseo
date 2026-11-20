@@ -6,7 +6,7 @@ This plan is based on the current plugin source and its documented behavior. It 
 
 - Add regression coverage for Bots and regular Paseo sessions: listing paired numbers, reading one or many chats by date, and sending only after the recipient and exact message are separately confirmed.
 - Verify a broad read request calls the read tool directly, does not ask for chat selection, and does not enter the send-recipient flow.
-- Use exact `toolPolicy.preapproved` server/tool references for new agents. Keep the narrow prompt-text fallback only for existing saved agents until Paseo provides a supported way to update their saved tool policy.
+- Keep MCP auto-approval scoped to `paseo` permission requests whose tool name matches Waseo's allowlist. Waseo's attached tools are not a declared MCP server, so do not inject global `toolPolicy` references; revisit structured tool identity when Paseo exposes it for plugin tools.
 - Exercise the permission hook with other Paseo tools and with non-Waseo permission requests to confirm they remain user-controlled.
 - Document that send approvals expire and are held in memory, so restarting Waseo invalidates any pending approval.
 
