@@ -78,6 +78,7 @@ const restartDelaysMs = [1_000, 2_000, 5_000, 10_000, 30_000, 60_000];
 const listeners = new Set<(event: UiEvent) => void>();
 const latest = new Map<string, UiEvent>();
 const pendingApprovals = new Map<string, ContactApproval | SendApproval>();
+const claimedSendApprovals = new Set<string>();
 const contactGrants = new Map<string, ContactGrant>();
 let lastAccountSnapshot: AccountSnapshot = { accounts: [], supportsMultiple: false };
 let configuredDefaultAccount = "";
@@ -1251,41 +1252,51 @@ const sendConfirmedMessageTool = defineAgentTool({
   input: z.object({ approvalCode: z.string().trim().min(8).max(32) }),
   async execute({ approvalCode }, context) {
     const { code, approval } = approvalForAgent(approvalCode, context.agent.id, "send") as { code: string; approval: SendApproval };
-    await confirmCodeInLaterUserTurn(context, code, approval.createdAt);
-    await ensureConnectedAccount(approval.accountId, context.signal);
-    if (approval.expiresAt <= Date.now()) throw new Error("This send approval expired while WACLI was reconnecting. Prepare and confirm the message again.");
-    pendingApprovals.delete(code);
-    const executable = await requireWacliBinary();
-    let stdout: string;
+    if (claimedSendApprovals.has(code)) {
+      throw new Error("This send approval is already being processed. Wait for that send attempt to finish before trying again.");
+    }
+    claimedSendApprovals.add(code);
     try {
-      ({ stdout } = await execFileAsync(executable, [
-        ...accountArgs(approval.accountId), "--json", "send", "text", "--to", approval.contact.jid,
-        "--message", approval.message, "--no-preview",
-      ], {
-        timeout: 60_000,
-        maxBuffer: 2 * 1024 * 1024,
-        signal: context.signal,
-        env: { ...process.env, WACLI_READONLY: "0" },
-      }));
-    } catch {
-      throw new Error("WACLI could not confirm whether the message was accepted. Check this chat's WhatsApp history before considering another send; Waseo will not retry it automatically.");
+      await confirmCodeInLaterUserTurn(context, code, approval.createdAt);
+      await ensureConnectedAccount(approval.accountId, context.signal);
+      if (approval.expiresAt <= Date.now() || pendingApprovals.get(code) !== approval) {
+        throw new Error("This send approval expired or was already used while WACLI was reconnecting. Prepare and confirm the message again.");
+      }
+      pendingApprovals.delete(code);
+      const executable = await requireWacliBinary();
+      let stdout: string;
+      try {
+        ({ stdout } = await execFileAsync(executable, [
+          ...accountArgs(approval.accountId), "--json", "send", "text", "--to", approval.contact.jid,
+          "--message", approval.message, "--no-preview",
+        ], {
+          timeout: 60_000,
+          maxBuffer: 2 * 1024 * 1024,
+          signal: context.signal,
+          env: { ...process.env, WACLI_READONLY: "0" },
+        }));
+      } catch {
+        throw new Error("WACLI could not confirm whether the message was accepted. Check this chat's WhatsApp history before considering another send; Waseo will not retry it automatically.");
+      }
+      let response: Record<string, unknown>;
+      try { response = JSON.parse(stdout) as Record<string, unknown>; }
+      catch { throw new Error("WACLI returned no verifiable send result. Check WhatsApp history before considering another send."); }
+      const data = responseData(response);
+      if (data.sent !== true && response.sent !== true) {
+        throw new Error("WACLI did not confirm that WhatsApp accepted the message. Check chat history before considering another send.");
+      }
+      const result = {
+        sent: true,
+        accountId: approval.accountId,
+        contact: { name: approval.contact.name, phone: approval.contact.phone },
+        messageId: stringValue(data, "message_id", "messageId", "id", "msg_id"),
+        message: approval.message,
+        delivery: "accepted by WhatsApp; recipient delivery is not verified",
+      };
+      return { text: JSON.stringify(result), structuredContent: result };
+    } finally {
+      claimedSendApprovals.delete(code);
     }
-    let response: Record<string, unknown>;
-    try { response = JSON.parse(stdout) as Record<string, unknown>; }
-    catch { throw new Error("WACLI returned no verifiable send result. Check WhatsApp history before considering another send."); }
-    const data = responseData(response);
-    if (data.sent !== true && response.sent !== true) {
-      throw new Error("WACLI did not confirm that WhatsApp accepted the message. Check chat history before considering another send.");
-    }
-    const result = {
-      sent: true,
-      accountId: approval.accountId,
-      contact: { name: approval.contact.name, phone: approval.contact.phone },
-      messageId: stringValue(data, "message_id", "messageId", "id", "msg_id"),
-      message: approval.message,
-      delivery: "accepted by WhatsApp; recipient delivery is not verified",
-    };
-    return { text: JSON.stringify(result), structuredContent: result };
   },
 });
 
